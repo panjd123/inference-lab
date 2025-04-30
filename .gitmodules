@@ -1,0 +1,3 @@
+[submodule "gpu-benches"]
+	path = gpu-benches
+	url = https://github.com/RRZE-HPC/gpu-benches.git
