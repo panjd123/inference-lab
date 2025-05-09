@@ -20,4 +20,4 @@ python examples/quick_start.py # 运行最简单的 CPU 和 CUDA 例子
 
 ## 学习目标
 
-- 通过 `setup.py` 掌握 Pytorch Extension 的写法
+- 通过学习 `fast_cuda` 文件夹，掌握 GPU 编程入门

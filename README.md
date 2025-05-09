@@ -24,3 +24,11 @@
 
 - [`native-ctypes`](./native-ctypes/)
 - [`pytorch-extension`](./pytorch-extension/)
+
+## 第三节：GPU入门
+
+代码：
+
+- [`fast_cuda`](./fast_cuda/)
+- [`pytorch-extension`](./pytorch-extension/)
+- [`pytorch-extension2`](./pytorch-extension2/)
