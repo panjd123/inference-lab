@@ -1,7 +1,7 @@
 ## 如何运行
 
 ```bash
-cd pytorch-extension
+cd pytorch-extension2
 pip install . # 安装当前目录下的包，本质上他会执行一遍 python setup.py install，里面写了关于编译的脚本
 python examples/quick_start.py # 运行最简单的 CPU 和 CUDA 例子
 ```

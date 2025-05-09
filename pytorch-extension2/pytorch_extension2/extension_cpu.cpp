@@ -1,5 +1,12 @@
 #include <omp.h>
 #include <torch/extension.h>
+#include "fast_cuda/matmul/matmul.h"
+
+FAST_MATMUL fast_matmul_method = FAST_MATMUL::NATIVE;
+
+void set_fast_matmul_method(FAST_MATMUL method) {
+    fast_matmul_method = method;
+}
 
 torch::Tensor square_cpu(torch::Tensor x);
 torch::Tensor square_cuda(torch::Tensor x);
@@ -83,4 +90,11 @@ torch::Tensor matmul_rowmajor_columnmajor(torch::Tensor a, torch::Tensor b) {
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.def("square", &square, "Square tensor elements");
     m.def("matmul_rowmajor_columnmajor", &matmul_rowmajor_columnmajor, "Matrix multiplication with row-major and column-major tensors");
+    py::enum_<FAST_MATMUL>(m, "FastMatmulMethod")
+        .value("NATIVE", FAST_MATMUL::NATIVE)
+        .value("SHARED_MEMORY", FAST_MATMUL::SHARED_MEMORY)
+        .value("SHARED_MEMORY_NATIVE", FAST_MATMUL::SHARED_MEMORY_NATIVE)
+        .value("TILE", FAST_MATMUL::TILE)
+        .export_values();
+    m.def("set_fast_matmul_method", &set_fast_matmul_method, "Set the fast matmul method");
 }

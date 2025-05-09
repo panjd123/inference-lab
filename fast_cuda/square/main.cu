@@ -78,3 +78,5 @@ int main() {
     }
     return 0;
 }
+
+// https://cuda.godbolt.org/z/d8cMrjsoE

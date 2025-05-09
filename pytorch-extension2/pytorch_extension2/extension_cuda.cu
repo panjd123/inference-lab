@@ -1,4 +1,8 @@
 #include <torch/extension.h>
+#include "fast_cuda/matmul/matmul.cuh"
+#include "fast_cuda/square/square.cuh"
+
+extern FAST_MATMUL fast_matmul_method;
 
 template <typename scalar_t>
 __global__ void square_cuda_kernel(scalar_t* input, scalar_t* output, int size) {
@@ -43,9 +47,10 @@ __global__ void matmul_rc_cuda_kernel(scalar_t* a, scalar_t* b, scalar_t* d, int
 
 template <typename scalar_t>
 void matmul_rc_cuda_impl(scalar_t* a, scalar_t* b, scalar_t* d, int m, int n, int k) {
-    static const dim3 block_size(16, 16);
-    dim3 grid_size((m + block_size.x - 1) / block_size.x, (n + block_size.y - 1) / block_size.y);
-    matmul_rc_cuda_kernel<<<grid_size, block_size>>>(a, b, d, m, n, k);
+    fast_matmul(a, b, d, m, n, k, fast_matmul_method);
+    // static const dim3 block_size(16, 16);
+    // dim3 grid_size((m + block_size.x - 1) / block_size.x, (n + block_size.y - 1) / block_size.y);
+    // matmul_rc_cuda_kernel<<<grid_size, block_size>>>(a, b, d, m, n, k);
     cudaDeviceSynchronize();
 }
 

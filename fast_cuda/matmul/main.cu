@@ -10,7 +10,11 @@
 #include "../init.cuh"
 #include "matmul.cuh"
 
-template <typename T>
+half fabs(half x) {
+    return __habs(x);
+}
+
+template <typename T, int EnableRef = !std::is_same<T, half>::value>
 void benchmark(
     size_t M,
     size_t N,
@@ -37,14 +41,16 @@ void benchmark(
     for (int i = 0; i < K * N; i++) {
         h_B[i] = static_cast<T>(dist(gen));
     }
+    if constexpr (EnableRef) {
 #pragma omp parallel for
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < N; j++) {
-            T value = 0;
-            for (int k = 0; k < K; k++) {
-                value += h_A[i * K + k] * h_B[j * K + k];
+        for (int i = 0; i < M; i++) {
+            for (int j = 0; j < N; j++) {
+                T value = 0;
+                for (int k = 0; k < K; k++) {
+                    value += h_A[i * K + k] * h_B[j * K + k];
+                }
+                h_C_ref[i * N + j] = value;
             }
-            h_C_ref[i * N + j] = value;
         }
     }
     cudaMemcpy(d_A, h_A, M * K * sizeof(T), cudaMemcpyHostToDevice);
@@ -74,18 +80,23 @@ void benchmark(
     double memory_transfer = 0;  // in bytes
     if (method == FAST_MATMUL::NATIVE) {
         memory_transfer = (M * N * (2 * K + 1)) * sizeof(T);
-    } else if (method == FAST_MATMUL::SHARED_MEMORY) {
-        memory_transfer = (M * N + M * K * ceil_div(N, 16) + K * N * ceil_div(M, 16)) * sizeof(T);
+    } else if (method == FAST_MATMUL::SHARED_MEMORY ||
+               method == FAST_MATMUL::SHARED_MEMORY_NATIVE) {
+        DefaultArgument default_arg = get_default_args(method);
+        GemmCoord threadblock_shape = default_arg.threadblock_shape;
+        memory_transfer = (M * N + M * K * ceil_div(N, threadblock_shape.n) + K * N * ceil_div(M, threadblock_shape.m)) * sizeof(T);
     }
 
     double bandwidth = memory_transfer / (avg_seconds * 1024.0 * 1024.0 * 1024.0);  // in GB/s
     double gflops = (2 * M * N * K) / (avg_seconds * 1024.0 * 1024.0 * 1024.0);     // in GFLOPS
     printf("%20ld%20.8f%20.8f%20.8f%20.8f%50s\n", N, avg_seconds * 1000.0, memory_transfer / (1024.0 * 1024.0), bandwidth, gflops, fast_matmul_method_to_string(method).c_str());
     cudaMemcpy(h_C, d_C, M * N * sizeof(T), cudaMemcpyDeviceToHost);
-    for (int i = 0; i < M * N; i++) {
-        if (fabs(h_C[i] - h_C_ref[i]) / (fabs(h_C[i]) + fabs(h_C_ref[i]) + 1e-7) > 1e-3 && fabs(h_C[i] - h_C_ref[i]) > 1e-4) {
-            printf("Error: %.10f != %.10f\n", h_C[i], h_C_ref[i]);
-            break;
+    if constexpr (EnableRef) {
+        for (int i = 0; i < M * N; i++) {
+            if (fabs(h_C[i] - h_C_ref[i]) / (fabs(h_C[i]) + fabs(h_C_ref[i]) + 1e-7) > 1e-3 && fabs(h_C[i] - h_C_ref[i]) > 1e-4) {
+                printf("Error: %.10f != %.10f\n", h_C[i], h_C_ref[i]);
+                break;
+            }
         }
     }
     cudaFree(d_A);
@@ -119,8 +130,8 @@ int main() {
     cuda_info();
     printf("%20s%20s%20s%20s%20s%50s\n", "N", "Time (ms)", "Memory (MB)", "Bandwidth (GB/s)", "GFLOPS", "Method");
     for (size_t n = 256; n <= 4096; n *= 2) {
-        for (FAST_MATMUL method : {FAST_MATMUL::NATIVE, FAST_MATMUL::SHARED_MEMORY}) {  // , FAST_MATMUL::SHARED_MEMORY
-            benchmark<float>(n, n, n, 1, 5, method);
+        for (FAST_MATMUL method : {FAST_MATMUL::NATIVE, FAST_MATMUL::SHARED_MEMORY, FAST_MATMUL::SHARED_MEMORY_NATIVE}) {  // , FAST_MATMUL::SHARED_MEMORY
+            benchmark<half>(n, n, n, 1, 5, method);
         }
     }
     return 0;
