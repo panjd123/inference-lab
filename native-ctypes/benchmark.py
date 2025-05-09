@@ -4,7 +4,7 @@ import os
 import timeit
 
 # 加载当前目录下的动态链接库 libsquare.so
-lib = ctypes.cdll.LoadLibrary(os.path.abspath("libsquare.so"))
+lib = ctypes.cdll.LoadLibrary(os.path.abspath("libsquare_all.so"))
 
 # 指定 C 函数的参数类型
 square_array_c_ = lib.square_array
