@@ -9,7 +9,14 @@ extern "C" void square_array(const float* input, float* output, int size) {
 }
 
 extern "C" void parallel_square_array(const float* input, float* output, int size) {
-    #pragma omp parallel for
+#pragma omp parallel for
+    for (int i = 0; i < size; ++i) {
+        output[i] = input[i] * input[i];
+    }
+}
+
+extern "C" void our_parallel_square_array(const float* input, float* output, int size) {
+#pragma omp parallel for
     for (int i = 0; i < size; ++i) {
         output[i] = input[i] * input[i];
     }

@@ -4,3 +4,4 @@ extern "C" void square_array(const float* input, float* output, int size);
 extern "C" void parallel_square_array(const float* input, float* output, int size);
 extern "C" void native_cuda_square_array(const float* input, float* output, int size);
 extern "C" void cuda_square_array(const float* input, float* output, int size);
+extern "C" void our_parallel_square_array(const float* input, float* output, int size);

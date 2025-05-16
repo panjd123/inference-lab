@@ -1,0 +1,70 @@
+
+double performance_cpu_weight = 2;
+double energy_cpu_weight = 1;
+
+
+void balance_parallel_cube_root(const float* input, float* output, int size) {
+  double weight_sum = performance_cpu_weight * 16 + energy_cpu_weight * 16;
+  double pieces_size = size / weight_sum;
+  int performance_piece_size = performance_cpu_weight * pieces_size;
+  int energy_piece_size = energy_cpu_weight * pieces_size;
+  int residual = size - performance_piece_size * 16 - energy_piece_size * 16;
+  if (residual > 32) {
+    printf("too large residual %d\n", residual);
+  }
+  int workspace_offset[33] = {0};
+  for (int i = 0; i < 16; ++i) {
+    workspace_offset[i] = performance_piece_size;
+  }
+  for (int i = 16; i < 32; ++i) {
+    workspace_offset[i] = energy_piece_size;
+  }
+  for (int i = 0; i < residual; ++i) {
+    workspace_offset[i] += 1;
+  }
+  workspace_offset[32] = 0;
+  for (int i = 1; i < 33; ++i) {
+    workspace_offset[i] += workspace_offset[i - 1];
+  }
+  if (workspace_offset[32] != size) {
+    printf("workspace_offset[32] %d != size %d\n", workspace_offset[32], size);
+  }
+#pragma omp parallel
+  {
+    int nt = omp_get_num_threads();
+    int tid = omp_get_thread_num();
+    int cpu = sched_getcpu();  // 返回当前线程正在运行的 CPU core ID
+    // printf("Thread %d is running on core %d\n", tid, cpu);
+    int start, end;
+    if (nt != 32) {
+      int workspace_size = (size + nt - 1) / nt;
+      start = tid * workspace_size;
+      end = std::min(start + workspace_size, size);
+    } else {
+      start = workspace_offset[cpu];
+      end = workspace_offset[cpu + 1];
+      // printf("%d %d %d %d\n", cpu, start, end, end - start);
+    }
+    for (int i = start; i < end; ++i) {
+      output[i] = newton_cube_root(input[i]);
+    }
+  }
+}
+
+void what_is_going_on() {
+  std::map<int, int> cpu_map;
+  omp_set_num_threads(4);  // 设置线程数为4
+#pragma omp parallel
+  {
+    int tid = omp_get_thread_num();
+    int cpu = sched_getcpu();  // 返回当前线程正在运行的 CPU core ID
+#pragma omp critical
+    {
+      cpu_map[tid] = cpu;
+    }
+  }
+  for (const auto& pair : cpu_map) {
+    std::cout << "Thread " << pair.first << " is running on core "
+              << pair.second << std::endl;
+  }
+}
