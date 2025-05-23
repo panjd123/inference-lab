@@ -91,7 +91,7 @@ void dynamic_avx2_parallel_cube_root_template(const float* input,
                                               float* output,
                                               int size) {
     size = (size + 7) / 8 * 8;  // 向上取整到8的倍数
-#pragma omp parallel for schedule(dynamic, 1000) private(input, output, size)
+#pragma omp parallel for schedule(dynamic, 1) private(input, output, size)
     for (int i = 0; i < size; i += 8) {
         avx2_newton_cube_root<CubeRootIterations>(input + i, output + i);
     }
@@ -279,10 +279,10 @@ int main() {
               << std::endl;
     // run_all_configs<1, 2, 3, 10, 14, 15, 16, 17, 18, 50, 100, 200, 500,
     //                 1000>(input, output, N, iter, float_op);
-    run_all_configs<2, 16, 18, 100, 1000, 10000>(input, output, N, iter, float_op);
+    // run_all_configs<2, 16, 18, 100, 1000, 10000>(input, output, N, iter, float_op);
 
     // 反常多线程
-    // run_all_configs<3>(input, output, N, iter, float_op);
+    run_all_configs<3>(input, output, N, iter, float_op);
 
     delete[] input;
     delete[] output;
