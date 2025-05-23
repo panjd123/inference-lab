@@ -18,17 +18,21 @@
 
 - [`native-ctypes`](./native-ctypes/)
 
-## 第二节：大模型基础与并行计算初探
+## 第二节：大模型基础与并行计算初探；第三节：CPU 并行深入
 
 代码：
 
 - [`native-ctypes`](./native-ctypes/)
 - [`pytorch-extension`](./pytorch-extension/)
 
-## 第三节：GPU入门
+## 第四节：GPU入门（人工智能计算系统上机课1）
 
 代码：
 
 - [`fast_cuda`](./fast_cuda/)
 - [`pytorch-extension`](./pytorch-extension/)
 - [`pytorch-extension2`](./pytorch-extension2/)
+
+文档：
+
+- [`document`](./document/)
