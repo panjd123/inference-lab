@@ -35,4 +35,8 @@
 
 文档：
 
-- [`document`](./document/)
+- [`document/lec4`](./document/lec4)
+
+## 第五节：GPU优化实践
+
+- [`document/lec5`](./document/lec5)
